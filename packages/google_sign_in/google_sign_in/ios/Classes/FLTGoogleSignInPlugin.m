@@ -1,6 +1,6 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+// Copyright 2017, the Flutter project authors.  Please see the AUTHORS file
+// for details. All rights reserved. Use of this source code is governed by a
+// BSD-style license that can be found in the LICENSE file.
 
 #import "FLTGoogleSignInPlugin.h"
 #import <GoogleSignIn/GoogleSignIn.h>
@@ -17,7 +17,7 @@ static NSString *const kErrorReasonSignInRequired = @"sign_in_required";
 static NSString *const kErrorReasonSignInCanceled = @"sign_in_canceled";
 static NSString *const kErrorReasonNetworkError = @"network_error";
 static NSString *const kErrorReasonSignInFailed = @"sign_in_failed";
-
+static FlutterResult AccountRequest;
 static FlutterError *getFlutterError(NSError *error) {
   NSString *errorCode;
   if (error.code == kGIDSignInErrorCodeHasNoAuthInKeychain) {
@@ -38,7 +38,6 @@ static FlutterError *getFlutterError(NSError *error) {
 @end
 
 @implementation FLTGoogleSignInPlugin {
-  FlutterResult _accountRequest;
   NSArray *_additionalScopesRequest;
 }
 
@@ -177,13 +176,13 @@ static FlutterError *getFlutterError(NSError *error) {
 }
 
 - (BOOL)setAccountRequest:(FlutterResult)request {
-  if (_accountRequest != nil) {
+  if (AccountRequest != nil) {
     request([FlutterError errorWithCode:@"concurrent-requests"
                                 message:@"Concurrent requests to account signin"
                                 details:nil]);
     return NO;
   }
-  _accountRequest = request;
+    AccountRequest = request;
   return YES;
 }
 
@@ -220,8 +219,8 @@ static FlutterError *getFlutterError(NSError *error) {
           break;
         }
       }
-      _accountRequest(@(granted));
-      _accountRequest = nil;
+        AccountRequest(@(granted));
+        AccountRequest = nil;
       _additionalScopesRequest = nil;
       return;
     } else {
@@ -252,8 +251,8 @@ static FlutterError *getFlutterError(NSError *error) {
 #pragma mark - private methods
 
 - (void)respondWithAccount:(id)account error:(NSError *)error {
-  FlutterResult result = _accountRequest;
-  _accountRequest = nil;
+  FlutterResult result = AccountRequest;
+    AccountRequest = nil;
   result(error != nil ? getFlutterError(error) : account);
 }
 
