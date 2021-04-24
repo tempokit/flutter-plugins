@@ -1,4 +1,4 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
+// Copyright 2019 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -12,8 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 GoogleSignIn _googleSignIn = GoogleSignIn(
-  // Optional clientId
-  // clientId: '479882132969-9i9aqik3jfjd7qhci1nqf0bm2g71rm1u.apps.googleusercontent.com',
   scopes: <String>[
     'email',
     'https://www.googleapis.com/auth/contacts.readonly',
@@ -35,31 +33,31 @@ class SignInDemo extends StatefulWidget {
 }
 
 class SignInDemoState extends State<SignInDemo> {
-  GoogleSignInAccount? _currentUser;
-  String _contactText = '';
+  GoogleSignInAccount _currentUser;
+  String _contactText;
 
   @override
   void initState() {
     super.initState();
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
+    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount account) {
       setState(() {
         _currentUser = account;
       });
       if (_currentUser != null) {
-        _handleGetContact(_currentUser!);
+        _handleGetContact();
       }
     });
     _googleSignIn.signInSilently();
   }
 
-  Future<void> _handleGetContact(GoogleSignInAccount user) async {
+  Future<void> _handleGetContact() async {
     setState(() {
       _contactText = "Loading contact info...";
     });
     final http.Response response = await http.get(
-      Uri.parse('https://people.googleapis.com/v1/people/me/connections'
-          '?requestMask.includeField=person.names'),
-      headers: await user.authHeaders,
+      'https://people.googleapis.com/v1/people/me/connections'
+      '?requestMask.includeField=person.names',
+      headers: await _currentUser.authHeaders,
     );
     if (response.statusCode != 200) {
       setState(() {
@@ -70,7 +68,7 @@ class SignInDemoState extends State<SignInDemo> {
       return;
     }
     final Map<String, dynamic> data = json.decode(response.body);
-    final String? namedContact = _pickFirstNamedContact(data);
+    final String namedContact = _pickFirstNamedContact(data);
     setState(() {
       if (namedContact != null) {
         _contactText = "I see you know $namedContact!";
@@ -80,14 +78,14 @@ class SignInDemoState extends State<SignInDemo> {
     });
   }
 
-  String? _pickFirstNamedContact(Map<String, dynamic> data) {
-    final List<dynamic>? connections = data['connections'];
-    final Map<String, dynamic>? contact = connections?.firstWhere(
+  String _pickFirstNamedContact(Map<String, dynamic> data) {
+    final List<dynamic> connections = data['connections'];
+    final Map<String, dynamic> contact = connections?.firstWhere(
       (dynamic contact) => contact['names'] != null,
       orElse: () => null,
     );
     if (contact != null) {
-      final Map<String, dynamic>? name = contact['names'].firstWhere(
+      final Map<String, dynamic> name = contact['names'].firstWhere(
         (dynamic name) => name['displayName'] != null,
         orElse: () => null,
       );
@@ -109,27 +107,26 @@ class SignInDemoState extends State<SignInDemo> {
   Future<void> _handleSignOut() => _googleSignIn.disconnect();
 
   Widget _buildBody() {
-    GoogleSignInAccount? user = _currentUser;
-    if (user != null) {
+    if (_currentUser != null) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
           ListTile(
             leading: GoogleUserCircleAvatar(
-              identity: user,
+              identity: _currentUser,
             ),
-            title: Text(user.displayName ?? ''),
-            subtitle: Text(user.email),
+            title: Text(_currentUser.displayName ?? ''),
+            subtitle: Text(_currentUser.email ?? ''),
           ),
           const Text("Signed in successfully."),
-          Text(_contactText),
+          Text(_contactText ?? ''),
           ElevatedButton(
             child: const Text('SIGN OUT'),
             onPressed: _handleSignOut,
           ),
           ElevatedButton(
             child: const Text('REFRESH'),
-            onPressed: () => _handleGetContact(user),
+            onPressed: _handleGetContact,
           ),
         ],
       );

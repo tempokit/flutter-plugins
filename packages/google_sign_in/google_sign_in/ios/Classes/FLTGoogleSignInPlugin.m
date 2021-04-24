@@ -76,22 +76,10 @@ static FlutterError *getFlutterError(NSError *error) {
                                                        ofType:@"plist"];
       if (path) {
         NSMutableDictionary *plist = [[NSMutableDictionary alloc] initWithContentsOfFile:path];
-        BOOL hasDynamicClientId =
-            [[call.arguments valueForKey:@"clientId"] isKindOfClass:[NSString class]];
-
-        if (hasDynamicClientId) {
-          [GIDSignIn sharedInstance].clientID = [call.arguments valueForKey:@"clientId"];
-        } else {
-          [GIDSignIn sharedInstance].clientID = plist[kClientIdKey];
-        }
-
+        [GIDSignIn sharedInstance].clientID = plist[kClientIdKey];
         [GIDSignIn sharedInstance].serverClientID = plist[kServerClientIdKey];
         [GIDSignIn sharedInstance].scopes = call.arguments[@"scopes"];
-        if (call.arguments[@"hostedDomain"] == [NSNull null]) {
-          [GIDSignIn sharedInstance].hostedDomain = nil;
-        } else {
-          [GIDSignIn sharedInstance].hostedDomain = call.arguments[@"hostedDomain"];
-        }
+        [GIDSignIn sharedInstance].hostedDomain = call.arguments[@"hostedDomain"];
         result(nil);
       } else {
         result([FlutterError errorWithCode:@"missing-config"

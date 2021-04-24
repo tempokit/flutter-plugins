@@ -1,6 +1,6 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+// Copyright 2017, the Flutter project authors.  Please see the AUTHORS file
+// for details. All rights reserved. Use of this source code is governed by a
+// BSD-style license that can be found in the LICENSE file.
 
 package io.flutter.plugins.googlesignin;
 
@@ -136,8 +136,7 @@ public class GoogleSignInPlugin implements MethodCallHandler, FlutterPlugin, Act
         String signInOption = call.argument("signInOption");
         List<String> requestedScopes = call.argument("scopes");
         String hostedDomain = call.argument("hostedDomain");
-        String clientId = call.argument("clientId");
-        delegate.init(result, signInOption, requestedScopes, hostedDomain, clientId);
+        delegate.init(result, signInOption, requestedScopes, hostedDomain);
         break;
 
       case METHOD_SIGN_IN_SILENTLY:
@@ -189,11 +188,7 @@ public class GoogleSignInPlugin implements MethodCallHandler, FlutterPlugin, Act
   public interface IDelegate {
     /** Initializes this delegate so that it is ready to perform other operations. */
     public void init(
-        Result result,
-        String signInOption,
-        List<String> requestedScopes,
-        String hostedDomain,
-        String clientId);
+        Result result, String signInOption, List<String> requestedScopes, String hostedDomain);
 
     /**
      * Returns the account information for the user who is signed in to this app. If no user is
@@ -314,11 +309,7 @@ public class GoogleSignInPlugin implements MethodCallHandler, FlutterPlugin, Act
      */
     @Override
     public void init(
-        Result result,
-        String signInOption,
-        List<String> requestedScopes,
-        String hostedDomain,
-        String clientId) {
+        Result result, String signInOption, List<String> requestedScopes, String hostedDomain) {
       try {
         GoogleSignInOptions.Builder optionsBuilder;
 
@@ -343,10 +334,7 @@ public class GoogleSignInPlugin implements MethodCallHandler, FlutterPlugin, Act
             context
                 .getResources()
                 .getIdentifier("default_web_client_id", "string", context.getPackageName());
-        if (!Strings.isNullOrEmpty(clientId)) {
-          optionsBuilder.requestIdToken(clientId);
-          optionsBuilder.requestServerAuthCode(clientId);
-        } else if (clientIdIdentifier != 0) {
+        if (clientIdIdentifier != 0) {
           optionsBuilder.requestIdToken(context.getString(clientIdIdentifier));
           optionsBuilder.requestServerAuthCode(context.getString(clientIdIdentifier));
         }
